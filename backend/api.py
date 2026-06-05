@@ -1,3 +1,5 @@
+from typing import Literal
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -18,6 +20,7 @@ app.add_middleware(
 
 class AskReq(BaseModel):
     question: str = Field(..., min_length=1)
+    mode: Literal["extractive", "llm"] = "extractive"
 
 
 class RecReq(BaseModel):
@@ -31,7 +34,7 @@ def health():
 
 @app.post("/ask")
 def ask_ep(payload: AskReq):
-    return ask(payload.question)
+    return ask(payload.question, mode=payload.mode)
 
 
 @app.post("/recommend")
