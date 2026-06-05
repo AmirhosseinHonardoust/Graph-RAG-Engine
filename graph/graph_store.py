@@ -52,10 +52,12 @@ class GraphStore:
             for ch, _, d in self.G.in_edges(("Concept", concept), data=True):
                 if ch[0] == "Chunk" and ch[1] != chunk_id:
                     neigh.add(ch[1])
-        return list(neigh)[:max_neighbors]
+        return sorted(neigh)[:max_neighbors]
 
     def get_doc_info(self, doc_id: str):
         n = ("Doc", doc_id)
+        if n not in self.G:
+            return {"title": None, "url": None, "pagerank": 0.0}
         return {
             "title": self.G.nodes[n].get("title"),
             "url": self.G.nodes[n].get("url"),
@@ -73,7 +75,7 @@ class GraphStore:
         paths = []
         for cid in chunk_ids:
             doc_id = self.get_chunk_doc(cid)
-            concepts = [c[1] for _, c, d in self.G.out_edges(("Chunk", cid), data=True) if d.get("type")=="MENTIONS"]
+            concepts = sorted([c[1] for _, c, d in self.G.out_edges(("Chunk", cid), data=True) if d.get("type")=="MENTIONS"])
             doc = self.get_doc_info(doc_id) if doc_id else {}
             paths.append({
                 "chunk_id": cid,
