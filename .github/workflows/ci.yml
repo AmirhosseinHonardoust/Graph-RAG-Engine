@@ -24,16 +24,17 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: "pip"
+          cache-dependency-path: env/requirements.txt
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r env/requirements.txt
 
-      - name: Check source files compile
+      - name: Compile source files
         run: |
-          python -m compileall backend graph ingest ui
+          python -m compileall backend graph ingest ui evaluation run_backend.py
 
-      - name: Run tests
+      - name: Run unit tests
         run: |
           python -m unittest discover -s tests -v
