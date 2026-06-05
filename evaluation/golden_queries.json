@@ -1,0 +1,38 @@
+[
+  {
+    "id": "q_faiss_dense_vectors",
+    "question": "How can I search dense vectors efficiently?",
+    "relevant_doc_ids": ["faiss_notes"],
+    "notes": "Should retrieve the FAISS notes document."
+  },
+  {
+    "id": "q_faiss_inner_product",
+    "question": "Which FAISS index can use inner product on normalized vectors?",
+    "relevant_doc_ids": ["faiss_notes"],
+    "notes": "Should retrieve the FAISS notes document mentioning IndexFlatIP."
+  },
+  {
+    "id": "q_streamlit_data_app",
+    "question": "How do I build a Python data app without front-end expertise?",
+    "relevant_doc_ids": ["streamlit_intro"],
+    "notes": "Should retrieve the Streamlit introduction document."
+  },
+  {
+    "id": "q_streamlit_features",
+    "question": "What Streamlit features help fast iteration?",
+    "relevant_doc_ids": ["streamlit_intro"],
+    "notes": "Should retrieve the Streamlit introduction document."
+  },
+  {
+    "id": "q_tfidf_embeddings_difference",
+    "question": "What is the difference between TF-IDF and embeddings?",
+    "relevant_doc_ids": ["tfidf_vs_embeddings"],
+    "notes": "Should retrieve the TF-IDF versus embeddings document."
+  },
+  {
+    "id": "q_rag_retrieval_representation",
+    "question": "Which text representations are typically used in modern RAG retrieval?",
+    "relevant_doc_ids": ["tfidf_vs_embeddings"],
+    "notes": "Should retrieve the TF-IDF versus embeddings document."
+  }
+]
