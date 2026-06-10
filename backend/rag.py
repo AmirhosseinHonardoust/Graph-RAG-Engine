@@ -48,12 +48,17 @@ def ask(question: str, mode: Literal["extractive", "llm"] = "extractive") -> Dic
         {"doc_title": passage["doc_title"], "url": passage["url"]}
         for passage in passages
     ]
+    retrieval_traces = [
+        passage.get("retrieval_trace", {"chunk_id": passage.get("id")})
+        for passage in passages
+    ]
 
     response = {
         "answer": answer,
         "answer_mode": answer_mode,
         "citations": citations,
         "paths": paths,
+        "retrieval_traces": retrieval_traces,
     }
     if llm_error:
         response["llm_error"] = llm_error
