@@ -1,5 +1,4 @@
 import os
-import json
 import requests
 import streamlit as st
 
@@ -45,6 +44,15 @@ tab1, tab2 = st.tabs(["🔎 Ask", "🧭 Recommend"])
 with tab1:
     st.subheader("Ask a question about the corpus")
     q = st.text_input("Question", value="What is FAISS?")
+    answer_mode = st.selectbox(
+        "Answer mode",
+        options=["extractive", "llm"],
+        index=0,
+        help=(
+            "Extractive mode returns retrieved source passages directly. "
+            "LLM mode asks the backend to synthesize a grounded answer when optional LLM credentials are configured."
+        ),
+    )
     ask_col1, ask_col2 = st.columns([1, 3])
 
     with ask_col1:
@@ -54,11 +62,17 @@ with tab1:
             else:
                 with st.spinner("Thinking…"):
                     try:
-                        data = post_json(f"{api_url}/ask", {"question": q})
+                        data = post_json(f"{api_url}/ask", {"question": q, "mode": answer_mode})
                     except Exception as e:
                         st.error(f"Error calling /ask: {e}")
                     else:
                         st.markdown("### Answer")
+                        st.caption(f"Answer mode: `{data.get('answer_mode', answer_mode)}`")
+
+                        llm_error = data.get("llm_error")
+                        if llm_error:
+                            st.warning(f"LLM mode fell back to extractive mode: {llm_error}")
+
                         st.markdown(data.get("answer", "_No answer returned_"))
 
                         citations = data.get("citations", [])
@@ -78,6 +92,10 @@ with tab1:
         st.info(
             "Tip: Try questions that relate concepts across docs, e.g. "
             "`How do embeddings relate to FAISS in modern RAG?`"
+        )
+        st.markdown(
+            "**Mode guide:** `extractive` is source-first and always available. "
+            "`llm` requires the backend LLM configuration and will safely fall back when unavailable."
         )
 
 # --------------------------- RECOMMEND ------------------------------
