@@ -498,6 +498,8 @@ The retrieval trace makes reranking easier to inspect.
 
 Each retrieved passage can include score components such as:
 
+<div align="center">
+
 | Field | Meaning |
 |---|---|
 | `chunk_id` | Retrieved chunk identifier |
@@ -510,6 +512,7 @@ Each retrieved passage can include score components such as:
 | `doc_pagerank` | Graph PageRank signal for the document |
 | `weights` | Reranking weights used by the retriever |
 | `final_score` | Final hybrid retrieval score |
+</div>
 
 The current reranking formula is:
 
@@ -534,12 +537,15 @@ evaluation/golden_queries.json
 
 The expanded demo benchmark includes:
 
+<div align="center">
+
 | Item | Count |
-|---|---:|
+|---|---|
 | Markdown documents | 19 |
 | Golden retrieval queries | 35 |
 | Multi-document query cases | Included |
 | Retrieval topics | Graph-RAG, chunking, hybrid retrieval, citations, evaluation, API contracts, failure modes, and production considerations |
+</div>
 
 Run evaluation with:
 
@@ -555,12 +561,15 @@ evaluation/results/retrieval_eval.json
 
 Evaluation metrics include:
 
+<div align="center">
+
 | Metric | Meaning |
 |---|---|
 | `hit@k` | Whether at least one relevant document appears in the top-k results |
 | `precision@k` | Fraction of top-k retrieved documents that are relevant |
 | `recall@k` | Fraction of relevant documents retrieved in the top-k results |
 | `MRR` | Reciprocal rank of the first relevant retrieved document |
+</div>
 
 Example custom run:
 
@@ -629,6 +638,8 @@ The GitHub Actions workflow checks:
 
 The project separates major responsibilities across modules:
 
+<div align="center">
+
 | Module | Purpose |
 |---|---|
 | `ingest/ingest_docs.py` | Builds document, chunk, embedding, FAISS, and graph artifacts |
@@ -641,6 +652,7 @@ The project separates major responsibilities across modules:
 | `evaluation/metrics.py` | Computes retrieval ranking metrics |
 | `evaluation/evaluate_retrieval.py` | Runs golden-query retrieval evaluation |
 | `ui/app.py` | Provides the Streamlit interface |
+</div>
 
 The current implementation is intentionally lightweight and local-first, which makes it suitable for a portfolio MVP and for experimenting with retrieval behavior.
 
