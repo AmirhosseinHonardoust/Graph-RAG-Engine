@@ -2,37 +2,311 @@
   {
     "id": "q_faiss_dense_vectors",
     "question": "How can I search dense vectors efficiently?",
-    "relevant_doc_ids": ["faiss_notes"],
-    "notes": "Should retrieve the FAISS notes document."
+    "relevant_doc_ids": [
+      "faiss_notes",
+      "vector_indexing_tradeoffs"
+    ],
+    "notes": "Should retrieve FAISS and vector-indexing notes."
   },
   {
     "id": "q_faiss_inner_product",
     "question": "Which FAISS index can use inner product on normalized vectors?",
-    "relevant_doc_ids": ["faiss_notes"],
-    "notes": "Should retrieve the FAISS notes document mentioning IndexFlatIP."
+    "relevant_doc_ids": [
+      "faiss_notes",
+      "vector_indexing_tradeoffs"
+    ],
+    "notes": "Should retrieve IndexFlatIP content."
+  },
+  {
+    "id": "q_vector_index_tradeoffs",
+    "question": "What are the tradeoffs between exact and approximate vector indexes?",
+    "relevant_doc_ids": [
+      "vector_indexing_tradeoffs",
+      "faiss_notes"
+    ],
+    "notes": "Should retrieve vector indexing guidance."
   },
   {
     "id": "q_streamlit_data_app",
     "question": "How do I build a Python data app without front-end expertise?",
-    "relevant_doc_ids": ["streamlit_intro"],
-    "notes": "Should retrieve the Streamlit introduction document."
+    "relevant_doc_ids": [
+      "streamlit_intro"
+    ],
+    "notes": "Should retrieve Streamlit overview."
   },
   {
-    "id": "q_streamlit_features",
-    "question": "What Streamlit features help fast iteration?",
-    "relevant_doc_ids": ["streamlit_intro"],
-    "notes": "Should retrieve the Streamlit introduction document."
+    "id": "q_streamlit_answer_modes",
+    "question": "How should a Streamlit RAG UI show extractive and LLM answer modes?",
+    "relevant_doc_ids": [
+      "streamlit_intro",
+      "prompt_grounding"
+    ],
+    "notes": "Should retrieve UI answer mode and prompt grounding notes."
   },
   {
     "id": "q_tfidf_embeddings_difference",
-    "question": "What is the difference between TF-IDF and embeddings?",
-    "relevant_doc_ids": ["tfidf_vs_embeddings"],
-    "notes": "Should retrieve the TF-IDF versus embeddings document."
+    "question": "What is the difference between TF-IDF and dense embeddings?",
+    "relevant_doc_ids": [
+      "tfidf_vs_embeddings"
+    ],
+    "notes": "Should retrieve sparse versus dense representation document."
   },
   {
     "id": "q_rag_retrieval_representation",
     "question": "Which text representations are typically used in modern RAG retrieval?",
-    "relevant_doc_ids": ["tfidf_vs_embeddings"],
-    "notes": "Should retrieve the TF-IDF versus embeddings document."
+    "relevant_doc_ids": [
+      "tfidf_vs_embeddings",
+      "hybrid_retrieval"
+    ],
+    "notes": "Should retrieve representation and hybrid retrieval notes."
+  },
+  {
+    "id": "q_chunking_context_precision",
+    "question": "Why can very small or very large chunks hurt retrieval quality?",
+    "relevant_doc_ids": [
+      "chunking_strategies"
+    ],
+    "notes": "Should retrieve chunking strategy discussion."
+  },
+  {
+    "id": "q_chunk_metadata",
+    "question": "What metadata should be kept with each retrieved chunk for citation?",
+    "relevant_doc_ids": [
+      "chunking_strategies",
+      "citation_grounding"
+    ],
+    "notes": "Should retrieve chunk metadata and citation grounding docs."
+  },
+  {
+    "id": "q_graph_rag_combines_search",
+    "question": "How does Graph-RAG combine vector search with graph expansion?",
+    "relevant_doc_ids": [
+      "graph_rag_overview",
+      "hybrid_retrieval"
+    ],
+    "notes": "Should retrieve Graph-RAG overview and hybrid retrieval notes."
+  },
+  {
+    "id": "q_graph_schema",
+    "question": "What nodes can a simple Graph-RAG knowledge graph contain?",
+    "relevant_doc_ids": [
+      "graph_rag_overview",
+      "knowledge_graph_concepts"
+    ],
+    "notes": "Should retrieve graph schema and concept node notes."
+  },
+  {
+    "id": "q_hybrid_ranking_signals",
+    "question": "Which signals can be combined in a hybrid Graph-RAG reranker?",
+    "relevant_doc_ids": [
+      "hybrid_retrieval",
+      "reranking_and_pagerank"
+    ],
+    "notes": "Should retrieve embedding similarity, concept overlap, and PageRank."
+  },
+  {
+    "id": "q_retrieval_trace",
+    "question": "Why should a retrieval trace show score components?",
+    "relevant_doc_ids": [
+      "hybrid_retrieval",
+      "reranking_and_pagerank"
+    ],
+    "notes": "Should retrieve trace and transparent reranking docs."
+  },
+  {
+    "id": "q_golden_queries_metrics",
+    "question": "Which metrics are useful for golden-query retrieval evaluation?",
+    "relevant_doc_ids": [
+      "retrieval_evaluation"
+    ],
+    "notes": "Should retrieve hit@k, precision@k, recall@k, and MRR discussion."
+  },
+  {
+    "id": "q_ci_retrieval_eval",
+    "question": "Why should retrieval evaluation run in CI?",
+    "relevant_doc_ids": [
+      "retrieval_evaluation",
+      "production_rag_considerations"
+    ],
+    "notes": "Should retrieve CI evaluation and operational regression notes."
+  },
+  {
+    "id": "q_citations_grounding",
+    "question": "Why should RAG answers include citations and source metadata?",
+    "relevant_doc_ids": [
+      "citation_grounding"
+    ],
+    "notes": "Should retrieve citation grounding notes."
+  },
+  {
+    "id": "q_repo_relative_paths",
+    "question": "Why are repo-relative source paths better than local machine paths in citations?",
+    "relevant_doc_ids": [
+      "citation_grounding",
+      "chunking_strategies"
+    ],
+    "notes": "Should retrieve citation path portability notes."
+  },
+  {
+    "id": "q_prompt_context_only",
+    "question": "How should an optional LLM be instructed when context is insufficient?",
+    "relevant_doc_ids": [
+      "prompt_grounding"
+    ],
+    "notes": "Should retrieve context-only prompt behavior."
+  },
+  {
+    "id": "q_llm_fallback",
+    "question": "What should happen if LLM mode fails or no API key is configured?",
+    "relevant_doc_ids": [
+      "prompt_grounding",
+      "streamlit_intro"
+    ],
+    "notes": "Should retrieve LLM fallback and UI mode notes."
+  },
+  {
+    "id": "q_concept_graph_neighbors",
+    "question": "How can concept nodes help retrieve neighboring chunks?",
+    "relevant_doc_ids": [
+      "knowledge_graph_concepts",
+      "graph_rag_overview"
+    ],
+    "notes": "Should retrieve concept graph expansion notes."
+  },
+  {
+    "id": "q_graph_explanations",
+    "question": "What should graph explanations show to make retrieval understandable?",
+    "relevant_doc_ids": [
+      "knowledge_graph_concepts",
+      "hybrid_retrieval"
+    ],
+    "notes": "Should retrieve shared concepts, graph paths, and trace behavior."
+  },
+  {
+    "id": "q_pagerank_weight",
+    "question": "Why should PageRank usually be a small reranking signal?",
+    "relevant_doc_ids": [
+      "reranking_and_pagerank"
+    ],
+    "notes": "Should retrieve PageRank reranking caution."
+  },
+  {
+    "id": "q_reranking_tests",
+    "question": "How should reranking changes be validated?",
+    "relevant_doc_ids": [
+      "reranking_and_pagerank",
+      "retrieval_evaluation"
+    ],
+    "notes": "Should retrieve golden-query testing and reranking validation notes."
+  },
+  {
+    "id": "q_production_rag_monitoring",
+    "question": "What monitoring does a production RAG system need?",
+    "relevant_doc_ids": [
+      "production_rag_considerations"
+    ],
+    "notes": "Should retrieve operational monitoring considerations."
+  },
+  {
+    "id": "q_permission_aware_retrieval",
+    "question": "Why do production knowledge systems need permission-aware retrieval?",
+    "relevant_doc_ids": [
+      "production_rag_considerations"
+    ],
+    "notes": "Should retrieve permissions and production security notes."
+  },
+  {
+    "id": "q_fastapi_lazy_loading",
+    "question": "Why should a FastAPI RAG backend load FAISS and embedding models lazily?",
+    "relevant_doc_ids": [
+      "fastapi_backend",
+      "local_development_ci"
+    ],
+    "notes": "Should retrieve backend lazy loading and optional dependency guidance."
+  },
+  {
+    "id": "q_ask_endpoint_response",
+    "question": "What should the ask endpoint return besides the answer text?",
+    "relevant_doc_ids": [
+      "fastapi_backend",
+      "api_contracts"
+    ],
+    "notes": "Should retrieve API response contract details."
+  },
+  {
+    "id": "q_api_contract_tests",
+    "question": "Why are API contract tests useful for a RAG user interface?",
+    "relevant_doc_ids": [
+      "api_contracts",
+      "streamlit_intro"
+    ],
+    "notes": "Should retrieve contract stability and UI dependency notes."
+  },
+  {
+    "id": "q_retrieval_failure_analysis",
+    "question": "How should retrieval failures be analyzed in a Graph-RAG system?",
+    "relevant_doc_ids": [
+      "retrieval_failure_modes",
+      "hybrid_retrieval"
+    ],
+    "notes": "Should retrieve failure analysis and score trace guidance."
+  },
+  {
+    "id": "q_weak_context_response",
+    "question": "What should the answer layer do when retrieved context is weak?",
+    "relevant_doc_ids": [
+      "retrieval_failure_modes",
+      "prompt_grounding"
+    ],
+    "notes": "Should retrieve weak retrieval and prompt grounding behavior."
+  },
+  {
+    "id": "q_index_refresh_steps",
+    "question": "What steps should run after documents change in a RAG corpus?",
+    "relevant_doc_ids": [
+      "index_refresh_workflow",
+      "local_development_ci"
+    ],
+    "notes": "Should retrieve index refresh and CI workflow notes."
+  },
+  {
+    "id": "q_index_artifact_paths",
+    "question": "Why should index artifacts avoid local absolute paths?",
+    "relevant_doc_ids": [
+      "index_refresh_workflow",
+      "document_metadata",
+      "citation_grounding"
+    ],
+    "notes": "Should retrieve repo-relative metadata and path portability notes."
+  },
+  {
+    "id": "q_document_metadata_fields",
+    "question": "Which metadata fields are useful for retrieved RAG passages?",
+    "relevant_doc_ids": [
+      "document_metadata",
+      "citation_grounding",
+      "chunking_strategies"
+    ],
+    "notes": "Should retrieve document and chunk metadata requirements."
+  },
+  {
+    "id": "q_stable_document_ids",
+    "question": "Why are stable document and chunk IDs important during ingestion?",
+    "relevant_doc_ids": [
+      "document_metadata",
+      "chunking_strategies",
+      "retrieval_evaluation"
+    ],
+    "notes": "Should retrieve stable metadata, chunking, and evaluation notes."
+  },
+  {
+    "id": "q_ci_commands",
+    "question": "What should a useful Graph-RAG CI workflow validate?",
+    "relevant_doc_ids": [
+      "local_development_ci",
+      "retrieval_evaluation",
+      "index_refresh_workflow"
+    ],
+    "notes": "Should retrieve compile, tests, ingestion, evaluation, and artifact validation."
   }
 ]
