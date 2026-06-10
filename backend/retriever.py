@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 import pickle
+import re
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import faiss
@@ -15,6 +16,12 @@ from graph.graph_store import GraphStore
 BASE = Path(__file__).resolve().parents[1]
 IDX_DIR = BASE / "data" / "index"
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
+
+RANKING_WEIGHTS: Dict[str, float] = {
+    "embedding_similarity": 0.60,
+    "concept_overlap": 0.25,
+    "doc_pagerank": 0.15,
+}
 
 
 @dataclass(frozen=True)
@@ -114,7 +121,68 @@ def ann_search(q: str, k: int = 8, store: Optional[RetrieverStore] = None) -> Li
 
 
 def _query_terms(q: str) -> set[str]:
-    return {term.strip().lower() for term in q.split() if len(term.strip()) > 2}
+    """Extract normalized query terms used for concept overlap."""
+
+    return {term.lower() for term in re.findall(r"[A-Za-z0-9_+-]+", q) if len(term) > 2}
+
+
+def _normalize_concepts(concepts: Iterable[Any]) -> set[str]:
+    return {str(concept).strip().lower() for concept in concepts if str(concept).strip()}
+
+
+def concept_overlap_score(q_terms: set[str], concepts: Iterable[Any]) -> Tuple[float, int, List[str]]:
+    """Return normalized concept-overlap score and matching concepts.
+
+    The previous reranker used the raw overlap count. Normalizing by the number
+    of query terms keeps the concept-overlap component in a comparable 0-1 range
+    with embedding similarity and PageRank-style scores.
+    """
+
+    normalized_concepts = _normalize_concepts(concepts)
+    if not q_terms:
+        return 0.0, 0, []
+
+    matches = sorted(q_terms.intersection(normalized_concepts))
+    score = len(matches) / max(1, len(q_terms))
+    return float(score), len(matches), matches
+
+
+def build_retrieval_trace(
+    *,
+    question_vector: np.ndarray,
+    query_terms: set[str],
+    chunk: Dict[str, Any],
+    chunk_index: int,
+    store: RetrieverStore,
+    weights: Optional[Dict[str, float]] = None,
+) -> Dict[str, Any]:
+    """Build transparent score components for a candidate chunk."""
+
+    weights = dict(weights or RANKING_WEIGHTS)
+    embedding_similarity = float(np.dot(question_vector, store.vecs[chunk_index]))
+    concept_overlap, concept_overlap_count, matched_concepts = concept_overlap_score(
+        query_terms,
+        chunk.get("concepts", []),
+    )
+    doc_pagerank = float(store.graph.get_doc_info(chunk["doc_id"]).get("pagerank", 0.0))
+    final_score = (
+        weights["embedding_similarity"] * embedding_similarity
+        + weights["concept_overlap"] * concept_overlap
+        + weights["doc_pagerank"] * doc_pagerank
+    )
+
+    return {
+        "chunk_id": chunk["id"],
+        "doc_id": chunk.get("doc_id"),
+        "doc_title": chunk.get("doc_title"),
+        "embedding_similarity": embedding_similarity,
+        "concept_overlap": concept_overlap,
+        "concept_overlap_count": concept_overlap_count,
+        "matched_concepts": matched_concepts,
+        "doc_pagerank": doc_pagerank,
+        "weights": weights,
+        "final_score": float(final_score),
+    }
 
 
 def _expand_chunk_ids_by_concepts(
@@ -151,8 +219,9 @@ def expand_and_rerank(
 ) -> List[Dict[str, Any]]:
     """Retrieve, graph-expand, and rerank candidate chunks.
 
-    Score blends embedding similarity, query/concept overlap, and document
-    PageRank. This remains intentionally transparent and debuggable.
+    Score blends embedding similarity, normalized query/concept overlap, and
+    document PageRank. Each returned passage includes a ``retrieval_trace`` so
+    API clients can inspect why a chunk was ranked.
     """
 
     store = store or get_store()
@@ -171,20 +240,27 @@ def expand_and_rerank(
     qv = store.model.encode([q], normalize_embeddings=True)[0].astype(np.float32)
     q_terms = _query_terms(q)
 
-    scored: List[Tuple[float, str]] = []
+    scored: List[Tuple[float, str, Dict[str, Any]]] = []
     for cid in candidate_ids:
         chunk = store.chunk_by_id[cid]
         idx = store.chunk_index_by_id[cid]
-        emb_sim = float(np.dot(qv, store.vecs[idx]))
-        concept_overlap = len(q_terms.intersection(set(chunk.get("concepts", []))))
-        doc_id = chunk["doc_id"]
-        doc_pr = store.graph.get_doc_info(doc_id).get("pagerank", 0.0)
-        score = 0.6 * emb_sim + 0.25 * concept_overlap + 0.15 * doc_pr
-        scored.append((score, cid))
+        trace = build_retrieval_trace(
+            question_vector=qv,
+            query_terms=q_terms,
+            chunk=chunk,
+            chunk_index=idx,
+            store=store,
+        )
+        scored.append((trace["final_score"], cid, trace))
 
-    scored.sort(key=lambda item: item[0], reverse=True)
-    top_ids = [cid for _, cid in scored[: max(1, top_n)]]
-    return [store.chunk_by_id[cid] for cid in top_ids]
+    scored.sort(key=lambda item: (item[0], item[1]), reverse=True)
+
+    passages: List[Dict[str, Any]] = []
+    for _, cid, trace in scored[: max(1, top_n)]:
+        passage = dict(store.chunk_by_id[cid])
+        passage["retrieval_trace"] = trace
+        passages.append(passage)
+    return passages
 
 
 def recommend_similar(
