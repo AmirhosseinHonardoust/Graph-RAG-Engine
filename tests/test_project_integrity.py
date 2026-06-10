@@ -6,6 +6,8 @@ from pathlib import Path
 
 import numpy as np
 
+from graph.graph_store import GraphStore
+
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
@@ -30,6 +32,31 @@ class ProjectIntegrityTests(unittest.TestCase):
         self.assertGreater(len(chunks), 0)
         self.assertEqual(len(chunks), vectors.shape[0])
         self.assertTrue(all("id" in chunk and "text" in chunk for chunk in chunks))
+
+    def test_index_urls_are_repo_relative(self):
+        index_dir = ROOT / "data" / "index"
+        with (index_dir / "docs.pkl").open("rb") as f:
+            docs = pickle.load(f)
+        with (index_dir / "chunks.pkl").open("rb") as f:
+            chunks = pickle.load(f)
+
+        urls = [doc.get("url", "") for doc in docs]
+        urls.extend(chunk.get("url", "") for chunk in chunks)
+
+        self.assertTrue(urls)
+        for url in urls:
+            self.assertTrue(
+                url.startswith("data/docs/"),
+                msg=f"Index URL should be repo-relative, got {url!r}",
+            )
+            self.assertNotIn("C:\\", url)
+            self.assertNotIn("file://", url)
+            self.assertNotIn("\\", url)
+
+        graph = GraphStore.load(index_dir / "graph.pkl")
+        for doc in docs:
+            info = graph.get_doc_info(doc["id"])
+            self.assertEqual(info["url"], doc["url"])
 
 
 if __name__ == "__main__":

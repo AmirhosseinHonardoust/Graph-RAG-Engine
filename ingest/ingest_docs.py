@@ -1,76 +1,105 @@
-import os, glob, pickle, orjson
-from typing import List, Dict, Any
-from sentence_transformers import SentenceTransformer
-import numpy as np
-import faiss
-from .split import simple_chunk, extract_concepts
+from __future__ import annotations
+
+import pickle
 from pathlib import Path
+from typing import Any, Dict, List
+
+import faiss
+import numpy as np
+from sentence_transformers import SentenceTransformer
+
 from graph.graph_store import GraphStore
+from .split import extract_concepts, simple_chunk
 
 BASE = Path(__file__).resolve().parents[1]
 DOCS_DIR = BASE / "data" / "docs"
 OUT_DIR = BASE / "data" / "index"
-OUT_DIR.mkdir(parents=True, exist_ok=True)
+MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 
-def load_docs() -> List[Dict[str, Any]]:
-    docs = []
-    for path in glob.glob(str(DOCS_DIR / "*.md")):
-        with open(path, "r", encoding="utf-8") as f:
-            text = f.read()
-        docs.append({
-            "id": os.path.splitext(os.path.basename(path))[0],
-            "title": os.path.basename(path),
-            "url": f"file://{path}",
-            "text": text
-        })
+
+def repo_relative_path(path: Path) -> str:
+    """Return a stable POSIX-style path relative to the repository root."""
+
+    return path.resolve().relative_to(BASE).as_posix()
+
+
+def load_docs(docs_dir: Path = DOCS_DIR) -> List[Dict[str, Any]]:
+    """Load markdown documents in a deterministic order.
+
+    The previous implementation stored absolute local ``file://`` URLs inside
+    the index artifacts. That leaked machine-specific paths such as
+    ``C:\\Users\\...`` and made citations non-portable. This loader stores
+    repository-relative paths instead, for example ``data/docs/faiss_notes.md``.
+    """
+
+    docs: List[Dict[str, Any]] = []
+    docs_dir = Path(docs_dir)
+    for path in sorted(docs_dir.glob("*.md")):
+        text = path.read_text(encoding="utf-8")
+        docs.append(
+            {
+                "id": path.stem,
+                "title": path.name,
+                "url": repo_relative_path(path),
+                "text": text,
+            }
+        )
     return docs
 
-def build_index(docs: List[Dict[str, Any]]):
-    # chunk + concepts
-    chunks = []
-    concepts = set()
-    for d in docs:
-        for i, ch in enumerate(simple_chunk(d["text"])):
-            cid = f"{d['id']}_chunk_{i}"
-            cpts = extract_concepts(ch)
-            concepts.update(cpts)
-            chunks.append({
-                "id": cid,
-                "doc_id": d["id"],
-                "doc_title": d["title"],
-                "url": d["url"],
-                "text": ch,
-                "concepts": cpts
-            })
-    # embeddings
-    model = SentenceTransformer("sentence-transformers/all-MiniLM-L6-v2")
-    vecs = model.encode([c["text"] for c in chunks], normalize_embeddings=True)
-    index = faiss.IndexFlatIP(vecs.shape[1])
-    index.add(vecs.astype(np.float32))
 
-    # persist
-    with open(OUT_DIR / "docs.pkl", "wb") as f:
+def build_index(docs: List[Dict[str, Any]], out_dir: Path = OUT_DIR) -> None:
+    """Build and persist chunk, vector, FAISS, and graph artifacts."""
+
+    if not docs:
+        raise ValueError("Cannot build an index without documents.")
+
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    chunks: List[Dict[str, Any]] = []
+    for doc in docs:
+        for i, chunk_text in enumerate(simple_chunk(doc["text"])):
+            chunk_id = f"{doc['id']}_chunk_{i}"
+            chunks.append(
+                {
+                    "id": chunk_id,
+                    "doc_id": doc["id"],
+                    "doc_title": doc["title"],
+                    "url": doc["url"],
+                    "text": chunk_text,
+                    "concepts": extract_concepts(chunk_text),
+                }
+            )
+
+    model = SentenceTransformer(MODEL_NAME)
+    vectors = model.encode([chunk["text"] for chunk in chunks], normalize_embeddings=True)
+    vectors = vectors.astype(np.float32)
+
+    index = faiss.IndexFlatIP(vectors.shape[1])
+    index.add(vectors)
+
+    with (out_dir / "docs.pkl").open("wb") as f:
         pickle.dump(docs, f)
-    with open(OUT_DIR / "chunks.pkl", "wb") as f:
+    with (out_dir / "chunks.pkl").open("wb") as f:
         pickle.dump(chunks, f)
-    np.save(OUT_DIR / "vectors.npy", vecs.astype(np.float32))
-    faiss.write_index(index, str(OUT_DIR / "faiss.index"))
+    np.save(out_dir / "vectors.npy", vectors)
+    faiss.write_index(index, str(out_dir / "faiss.index"))
 
-    # build graph
-    gs = GraphStore()
-    for d in docs:
-        gs.add_doc(d["id"], d["title"], d["url"])
-    for c in chunks:
-        gs.add_chunk(c["id"], c["text"], c["doc_id"])
-        for k in c["concepts"]:
-            gs.add_concept(k)
-            gs.link_mentions(c["id"], k)
-    gs.compute_doc_pagerank()
-    gs.save(OUT_DIR / "graph.pkl")
+    graph_store = GraphStore()
+    for doc in docs:
+        graph_store.add_doc(doc["id"], doc["title"], doc["url"])
+    for chunk in chunks:
+        graph_store.add_chunk(chunk["id"], chunk["text"], chunk["doc_id"])
+        for concept in chunk["concepts"]:
+            graph_store.add_concept(concept)
+            graph_store.link_mentions(chunk["id"], concept)
+    graph_store.compute_doc_pagerank()
+    graph_store.save(out_dir / "graph.pkl")
+
 
 if __name__ == "__main__":
-    docs = load_docs()
-    if not docs:
+    loaded_docs = load_docs()
+    if not loaded_docs:
         raise SystemExit(f"No docs found in {DOCS_DIR}")
-    build_index(docs)
-    print(f"Ingested {len(docs)} docs. Index written to {OUT_DIR}")
+    build_index(loaded_docs)
+    print(f"Ingested {len(loaded_docs)} docs. Index written to {OUT_DIR}")
