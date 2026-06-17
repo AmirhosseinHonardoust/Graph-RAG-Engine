@@ -173,6 +173,7 @@ Graph-RAG-Engine/
 │       └── ci.yml
 │
 ├── backend/
+│   ├── __init__.py
 │   ├── api.py
 │   ├── llm.py
 │   ├── rag.py
@@ -266,23 +267,34 @@ python -m venv .venv
 source .venv/bin/activate
 ```
 
-### 3. Install Requirements
+### 3. Install the Package
+
+Install in editable mode. This pulls in all dependencies and registers the
+`graph-rag-ingest`, `graph-rag-eval`, and `graph-rag-serve` commands:
 
 ```bash
 python -m pip install --upgrade pip
-pip install -r env/requirements.txt
+pip install -e .
 ```
 
-The first embedding run may download the SentenceTransformer model, so an internet connection is required for initial setup.
+For development tools (Ruff, Black, mypy, pre-commit):
+
+```bash
+pip install -e ".[dev]"
+```
+
+The pinned dependency list is also available at `env/requirements.txt`. The
+first embedding run may download the SentenceTransformer model, so an internet
+connection is required for initial setup.
 
 ---
 
 ## Building the Index
 
-Run ingestion from the project root:
+Run ingestion (from anywhere once installed):
 
 ```bash
-python -m ingest.ingest_docs
+graph-rag-ingest
 ```
 
 This will:
@@ -312,8 +324,11 @@ data/index/
 Start the FastAPI backend:
 
 ```bash
-uvicorn backend.api:app --reload --port 8000
+graph-rag-serve
 ```
+
+This serves `backend.api:app` on `127.0.0.1:8000` with reload enabled. You can
+also run uvicorn directly: `uvicorn backend.api:app --reload --port 8000`.
 
 Open the API docs:
 
@@ -550,7 +565,7 @@ The expanded demo benchmark includes:
 Run evaluation with:
 
 ```bash
-python -m evaluation.evaluate_retrieval
+graph-rag-eval
 ```
 
 The evaluation generates:

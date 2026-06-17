@@ -1,6 +1,5 @@
 import compileall
 import pickle
-import sys
 import unittest
 from pathlib import Path
 
@@ -9,7 +8,6 @@ import numpy as np
 from graph.graph_store import GraphStore
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
 
 INDEX_DIR = ROOT / "data" / "index"
 INDEX_AVAILABLE = all(
