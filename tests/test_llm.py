@@ -9,7 +9,6 @@ sys.path.insert(0, str(ROOT))
 
 from backend.llm import LLMConfig, build_rag_prompt, build_source_context, generate_llm_answer
 
-
 PASSAGES = [
     {
         "doc_title": "FAISS Notes",

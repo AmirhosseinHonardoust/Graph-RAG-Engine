@@ -13,8 +13,7 @@ sys.path.insert(0, str(ROOT))
 
 INDEX_DIR = ROOT / "data" / "index"
 INDEX_AVAILABLE = all(
-    (INDEX_DIR / name).exists()
-    for name in ("chunks.pkl", "docs.pkl", "vectors.npy", "graph.pkl")
+    (INDEX_DIR / name).exists() for name in ("chunks.pkl", "docs.pkl", "vectors.npy", "graph.pkl")
 )
 INDEX_SKIP_REASON = "Index artifacts not built; run `python -m ingest.ingest_docs`."
 

@@ -1,11 +1,12 @@
 from __future__ import annotations
 
+import pickle
+import re
+from collections.abc import Iterable
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
-import pickle
-import re
-from typing import Any, Dict, Iterable, List, Optional, Tuple
+from typing import Any
 
 import faiss
 import numpy as np
@@ -17,7 +18,7 @@ BASE = Path(__file__).resolve().parents[1]
 IDX_DIR = BASE / "data" / "index"
 MODEL_NAME = "sentence-transformers/all-MiniLM-L6-v2"
 
-RANKING_WEIGHTS: Dict[str, float] = {
+RANKING_WEIGHTS: dict[str, float] = {
     "embedding_similarity": 0.60,
     "concept_overlap": 0.25,
     "doc_pagerank": 0.15,
@@ -33,13 +34,13 @@ class RetrieverStore:
     harder to test. The store is now loaded lazily through ``get_store``.
     """
 
-    chunks: List[Dict[str, Any]]
+    chunks: list[dict[str, Any]]
     vecs: np.ndarray
     index: Any
     model: SentenceTransformer
     graph: GraphStore
-    chunk_by_id: Dict[str, Dict[str, Any]]
-    chunk_index_by_id: Dict[str, int]
+    chunk_by_id: dict[str, dict[str, Any]]
+    chunk_index_by_id: dict[str, int]
 
 
 def _require_file(path: Path) -> None:
@@ -85,9 +86,7 @@ def get_store(index_dir: str | Path = IDX_DIR, model_name: str = MODEL_NAME) -> 
     chunk_index_by_id = {c["id"]: i for i, c in enumerate(chunks)}
 
     if len(chunks) != len(vecs):
-        raise ValueError(
-            f"Index artifact mismatch: {len(chunks)} chunks but {len(vecs)} vectors."
-        )
+        raise ValueError(f"Index artifact mismatch: {len(chunks)} chunks but {len(vecs)} vectors.")
 
     return RetrieverStore(
         chunks=chunks,
@@ -100,7 +99,7 @@ def get_store(index_dir: str | Path = IDX_DIR, model_name: str = MODEL_NAME) -> 
     )
 
 
-def ann_search(q: str, k: int = 8, store: Optional[RetrieverStore] = None) -> List[Tuple[str, float]]:
+def ann_search(q: str, k: int = 8, store: RetrieverStore | None = None) -> list[tuple[str, float]]:
     """Run approximate nearest-neighbor search over chunk embeddings."""
 
     if not q or not q.strip():
@@ -112,7 +111,7 @@ def ann_search(q: str, k: int = 8, store: Optional[RetrieverStore] = None) -> Li
     qv = store.model.encode([q], normalize_embeddings=True).astype(np.float32)
     distances, indices = store.index.search(qv, k)
 
-    results: List[Tuple[str, float]] = []
+    results: list[tuple[str, float]] = []
     for rank, idx in enumerate(indices[0]):
         if idx < 0:
             continue
@@ -130,7 +129,9 @@ def _normalize_concepts(concepts: Iterable[Any]) -> set[str]:
     return {str(concept).strip().lower() for concept in concepts if str(concept).strip()}
 
 
-def concept_overlap_score(q_terms: set[str], concepts: Iterable[Any]) -> Tuple[float, int, List[str]]:
+def concept_overlap_score(
+    q_terms: set[str], concepts: Iterable[Any]
+) -> tuple[float, int, list[str]]:
     """Return normalized concept-overlap score and matching concepts.
 
     The previous reranker used the raw overlap count. Normalizing by the number
@@ -151,11 +152,11 @@ def build_retrieval_trace(
     *,
     question_vector: np.ndarray,
     query_terms: set[str],
-    chunk: Dict[str, Any],
+    chunk: dict[str, Any],
     chunk_index: int,
     store: RetrieverStore,
-    weights: Optional[Dict[str, float]] = None,
-) -> Dict[str, Any]:
+    weights: dict[str, float] | None = None,
+) -> dict[str, Any]:
     """Build transparent score components for a candidate chunk."""
 
     weights = dict(weights or RANKING_WEIGHTS)
@@ -199,7 +200,9 @@ def _expand_chunk_ids_by_concepts(
     for _ in range(max(0, hops)):
         next_frontier: set[str] = set()
         for cid in frontier:
-            for neighbor in store.graph.neighbor_chunks_by_concepts(cid, max_neighbors=max_neighbors):
+            for neighbor in store.graph.neighbor_chunks_by_concepts(
+                cid, max_neighbors=max_neighbors
+            ):
                 if neighbor not in visited:
                     visited.add(neighbor)
                     next_frontier.add(neighbor)
@@ -215,8 +218,8 @@ def expand_and_rerank(
     base_k: int = 8,
     expand_hops: int = 1,
     top_n: int = 6,
-    store: Optional[RetrieverStore] = None,
-) -> List[Dict[str, Any]]:
+    store: RetrieverStore | None = None,
+) -> list[dict[str, Any]]:
     """Retrieve, graph-expand, and rerank candidate chunks.
 
     Score blends embedding similarity, normalized query/concept overlap, and
@@ -240,7 +243,7 @@ def expand_and_rerank(
     qv = store.model.encode([q], normalize_embeddings=True)[0].astype(np.float32)
     q_terms = _query_terms(q)
 
-    scored: List[Tuple[float, str, Dict[str, Any]]] = []
+    scored: list[tuple[float, str, dict[str, Any]]] = []
     for cid in candidate_ids:
         chunk = store.chunk_by_id[cid]
         idx = store.chunk_index_by_id[cid]
@@ -255,7 +258,7 @@ def expand_and_rerank(
 
     scored.sort(key=lambda item: (item[0], item[1]), reverse=True)
 
-    passages: List[Dict[str, Any]] = []
+    passages: list[dict[str, Any]] = []
     for _, cid, trace in scored[: max(1, top_n)]:
         passage = dict(store.chunk_by_id[cid])
         passage["retrieval_trace"] = trace
@@ -266,14 +269,12 @@ def expand_and_rerank(
 def recommend_similar(
     doc_id: str,
     k: int = 5,
-    store: Optional[RetrieverStore] = None,
-) -> List[Dict[str, Any]]:
+    store: RetrieverStore | None = None,
+) -> list[dict[str, Any]]:
     """Recommend documents whose chunks are close to the selected document."""
 
     store = store or get_store()
-    chunk_indices = [
-        i for i, chunk in enumerate(store.chunks) if chunk.get("doc_id") == doc_id
-    ]
+    chunk_indices = [i for i, chunk in enumerate(store.chunks) if chunk.get("doc_id") == doc_id]
     if not chunk_indices:
         return []
 
@@ -285,7 +286,7 @@ def recommend_similar(
     search_k = max(1, min(32, len(store.chunks)))
     _, indices = store.index.search(centroid.reshape(1, -1), search_k)
 
-    doc_scores: Dict[str, float] = {}
+    doc_scores: dict[str, float] = {}
     for idx in indices[0]:
         if idx < 0:
             continue
@@ -296,7 +297,9 @@ def recommend_similar(
         doc_scores[candidate_doc_id] = max(doc_scores.get(candidate_doc_id, 0.0), sim)
 
     for candidate_doc_id in list(doc_scores.keys()):
-        doc_scores[candidate_doc_id] = 0.8 * doc_scores[candidate_doc_id] + 0.2 * store.graph.get_doc_info(candidate_doc_id).get("pagerank", 0.0)
+        doc_scores[candidate_doc_id] = 0.8 * doc_scores[
+            candidate_doc_id
+        ] + 0.2 * store.graph.get_doc_info(candidate_doc_id).get("pagerank", 0.0)
 
     recommendations = [
         {"doc_id": candidate_doc_id, **store.graph.get_doc_info(candidate_doc_id), "score": score}

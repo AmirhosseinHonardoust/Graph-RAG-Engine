@@ -2,8 +2,9 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Dict, List, Sequence
+from typing import Any
 
 from .metrics import evaluate_query, summarize_evaluations
 
@@ -12,7 +13,7 @@ DEFAULT_QUERIES = ROOT / "evaluation" / "golden_queries.json"
 DEFAULT_OUTPUT = ROOT / "evaluation" / "results" / "retrieval_eval.json"
 
 
-def load_golden_queries(path: str | Path = DEFAULT_QUERIES) -> List[Dict[str, Any]]:
+def load_golden_queries(path: str | Path = DEFAULT_QUERIES) -> list[dict[str, Any]]:
     """Load and validate the golden retrieval queries file."""
 
     path = Path(path)
@@ -35,10 +36,10 @@ def load_golden_queries(path: str | Path = DEFAULT_QUERIES) -> List[Dict[str, An
     return queries
 
 
-def ranked_doc_ids_from_passages(passages: Sequence[Dict[str, Any]]) -> List[str]:
+def ranked_doc_ids_from_passages(passages: Sequence[dict[str, Any]]) -> list[str]:
     """Convert ranked retrieved chunks/passages into ranked document ids."""
 
-    doc_ids: List[str] = []
+    doc_ids: list[str] = []
     seen = set()
     for passage in passages:
         doc_id = passage.get("doc_id")
@@ -56,7 +57,7 @@ def run_retrieval_evaluation(
     base_k: int = 8,
     top_n: int = 6,
     expand_hops: int = 1,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Run the golden-query retrieval evaluation against the current index."""
 
     # Import lazily so metric tests do not require FAISS or sentence-transformers.
@@ -108,10 +109,18 @@ def run_retrieval_evaluation(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description="Evaluate retrieval quality on golden queries.")
-    parser.add_argument("--queries", default=str(DEFAULT_QUERIES), help="Path to golden queries JSON.")
-    parser.add_argument("--output", default=str(DEFAULT_OUTPUT), help="Where to write the JSON report.")
-    parser.add_argument("--k", type=int, default=3, help="Rank cutoff for hit/precision/recall metrics.")
-    parser.add_argument("--base-k", type=int, default=8, help="Initial vector-search candidate count.")
+    parser.add_argument(
+        "--queries", default=str(DEFAULT_QUERIES), help="Path to golden queries JSON."
+    )
+    parser.add_argument(
+        "--output", default=str(DEFAULT_OUTPUT), help="Where to write the JSON report."
+    )
+    parser.add_argument(
+        "--k", type=int, default=3, help="Rank cutoff for hit/precision/recall metrics."
+    )
+    parser.add_argument(
+        "--base-k", type=int, default=8, help="Initial vector-search candidate count."
+    )
     parser.add_argument("--top-n", type=int, default=6, help="Number of reranked chunks to keep.")
     parser.add_argument("--expand-hops", type=int, default=1, help="Concept-graph expansion hops.")
     args = parser.parse_args()

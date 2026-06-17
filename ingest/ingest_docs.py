@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import pickle
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import faiss
 import numpy as np
 from sentence_transformers import SentenceTransformer
 
 from graph.graph_store import GraphStore
+
 from .split import extract_concepts, simple_chunk
 
 BASE = Path(__file__).resolve().parents[1]
@@ -23,7 +24,7 @@ def repo_relative_path(path: Path) -> str:
     return path.resolve().relative_to(BASE).as_posix()
 
 
-def load_docs(docs_dir: Path = DOCS_DIR) -> List[Dict[str, Any]]:
+def load_docs(docs_dir: Path = DOCS_DIR) -> list[dict[str, Any]]:
     """Load markdown documents in a deterministic order.
 
     The previous implementation stored absolute local ``file://`` URLs inside
@@ -32,7 +33,7 @@ def load_docs(docs_dir: Path = DOCS_DIR) -> List[Dict[str, Any]]:
     repository-relative paths instead, for example ``data/docs/faiss_notes.md``.
     """
 
-    docs: List[Dict[str, Any]] = []
+    docs: list[dict[str, Any]] = []
     docs_dir = Path(docs_dir)
     for path in sorted(docs_dir.glob("*.md")):
         text = path.read_text(encoding="utf-8")
@@ -47,7 +48,7 @@ def load_docs(docs_dir: Path = DOCS_DIR) -> List[Dict[str, Any]]:
     return docs
 
 
-def build_index(docs: List[Dict[str, Any]], out_dir: Path = OUT_DIR) -> None:
+def build_index(docs: list[dict[str, Any]], out_dir: Path = OUT_DIR) -> None:
     """Build and persist chunk, vector, FAISS, and graph artifacts."""
 
     if not docs:
@@ -56,7 +57,7 @@ def build_index(docs: List[Dict[str, Any]], out_dir: Path = OUT_DIR) -> None:
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
 
-    chunks: List[Dict[str, Any]] = []
+    chunks: list[dict[str, Any]] = []
     for doc in docs:
         for i, chunk_text in enumerate(simple_chunk(doc["text"])):
             chunk_id = f"{doc['id']}_chunk_{i}"
