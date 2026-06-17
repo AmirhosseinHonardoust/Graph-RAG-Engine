@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import pickle
+import json
 from pathlib import Path
 from typing import Any
 
@@ -132,12 +132,32 @@ class GraphStore:
         return paths
 
     def save(self, path: Path) -> None:
-        with open(path, "wb") as f:
-            pickle.dump(self.G, f)
+        """Serialize the graph to JSON.
+
+        Nodes use typed tuple keys (e.g. ``("Doc", id)``) that JSON cannot
+        represent directly, so each is stored as a two-element list and restored
+        to a tuple on load. JSON avoids the arbitrary-code-execution risk of
+        loading pickled artifacts.
+        """
+        data = {
+            "nodes": [
+                {"id": list(node), "attrs": attrs} for node, attrs in self.G.nodes(data=True)
+            ],
+            "edges": [
+                {"source": list(u), "target": list(v), "attrs": attrs}
+                for u, v, attrs in self.G.edges(data=True)
+            ],
+        }
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(data, f)
 
     @classmethod
     def load(cls, path: Path) -> GraphStore:
         store = cls()
-        with open(path, "rb") as f:
-            store.G = pickle.load(f)
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+        for node in data["nodes"]:
+            store.G.add_node(tuple(node["id"]), **node["attrs"])
+        for edge in data["edges"]:
+            store.G.add_edge(tuple(edge["source"]), tuple(edge["target"]), **edge["attrs"])
         return store
