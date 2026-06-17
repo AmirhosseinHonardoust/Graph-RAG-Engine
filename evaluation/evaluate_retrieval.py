@@ -49,6 +49,20 @@ def ranked_doc_ids_from_passages(passages: Sequence[dict[str, Any]]) -> list[str
     return doc_ids
 
 
+def check_against_baseline(summary: dict[str, Any], baseline: dict[str, Any]) -> list[str]:
+    """Return a list of human-readable failures where a metric is below baseline."""
+    failures: list[str] = []
+    for metric, minimum in baseline.items():
+        if metric.startswith("_") or not isinstance(minimum, (int, float)):
+            continue
+        actual = summary.get(metric)
+        if actual is None:
+            failures.append(f"{metric}: missing from summary")
+        elif actual < minimum:
+            failures.append(f"{metric}: {actual:.3f} < required {minimum:.3f}")
+    return failures
+
+
 def run_retrieval_evaluation(
     *,
     queries_path: str | Path = DEFAULT_QUERIES,
@@ -123,6 +137,11 @@ def main() -> None:
     )
     parser.add_argument("--top-n", type=int, default=6, help="Number of reranked chunks to keep.")
     parser.add_argument("--expand-hops", type=int, default=1, help="Concept-graph expansion hops.")
+    parser.add_argument(
+        "--fail-under",
+        default=None,
+        help="Path to a baseline JSON; exit non-zero if any metric falls below it.",
+    )
     args = parser.parse_args()
 
     report = run_retrieval_evaluation(
@@ -140,9 +159,18 @@ def main() -> None:
         f"hit@{args.k}={summary['mean_hit_at_k']:.3f}, "
         f"precision@{args.k}={summary['mean_precision_at_k']:.3f}, "
         f"recall@{args.k}={summary['mean_recall_at_k']:.3f}, "
-        f"MRR={summary['mean_reciprocal_rank']:.3f}"
+        f"MRR={summary['mean_reciprocal_rank']:.3f}, "
+        f"nDCG@{args.k}={summary['mean_ndcg_at_k']:.3f}"
     )
     print(f"Report written to {args.output}")
+
+    if args.fail_under:
+        with open(args.fail_under, encoding="utf-8") as f:
+            baseline = json.load(f)
+        failures = check_against_baseline(summary, baseline)
+        if failures:
+            raise SystemExit("Retrieval quality regressed:\n  " + "\n  ".join(failures))
+        print(f"All metrics meet the baseline in {args.fail_under}.")
 
 
 if __name__ == "__main__":
