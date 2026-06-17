@@ -35,10 +35,6 @@ jobs:
         run: |
           python -m compileall backend graph ingest ui evaluation tests run_backend.py
 
-      - name: Run unit tests
-        run: |
-          python -m unittest discover -s tests -v
-
       - name: Rebuild retrieval index
         run: |
           python -m ingest.ingest_docs
@@ -53,11 +49,11 @@ jobs:
             --top-n 6 \
             --expand-hops 1
 
-      - name: Validate retrieval evaluation report
+      - name: Run unit tests
         env:
           RETRIEVAL_EVAL_REPORT: evaluation/results/retrieval_eval.json
         run: |
-          python -m unittest tests.test_retrieval_evaluation_smoke -v
+          python -m unittest discover -s tests -v
 
       - name: Verify generated retrieval artifacts
         run: |
