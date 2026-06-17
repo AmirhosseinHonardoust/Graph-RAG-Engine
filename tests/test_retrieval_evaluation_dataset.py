@@ -1,13 +1,11 @@
 import json
-import sys
 import unittest
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
-
 from evaluation.evaluate_retrieval import load_golden_queries, ranked_doc_ids_from_passages
 from ingest.split import simple_chunk
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 class RetrievalEvaluationDatasetTests(unittest.TestCase):
