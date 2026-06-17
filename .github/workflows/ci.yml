@@ -31,6 +31,25 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r env/requirements.txt
 
+      - name: Cache embedding model
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/huggingface
+          key: hf-${{ runner.os }}-all-MiniLM-L6-v2-v1
+
+      - name: Pre-download embedding model (retry on transient HF errors)
+        run: |
+          for i in 1 2 3 4 5; do
+            if python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('sentence-transformers/all-MiniLM-L6-v2')"; then
+              echo "Embedding model is available."
+              exit 0
+            fi
+            echo "Model download attempt $i failed; retrying in $((i * 20))s..."
+            sleep $((i * 20))
+          done
+          echo "Could not download the embedding model after several attempts."
+          exit 1
+
       - name: Compile source files
         run: |
           python -m compileall backend graph ingest ui evaluation tests run_backend.py
