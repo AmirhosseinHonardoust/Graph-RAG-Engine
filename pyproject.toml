@@ -32,10 +32,11 @@ dev = ["ruff", "black", "mypy", "pre-commit"]
 graph-rag-ingest = "ingest.ingest_docs:main"
 graph-rag-eval = "evaluation.evaluate_retrieval:main"
 graph-rag-serve = "run_backend:main"
+graph-rag-pipeline = "pipeline:main"
 
 [tool.setuptools]
 packages = ["backend", "graph", "ingest", "evaluation", "ui"]
-py-modules = ["run_backend"]
+py-modules = ["run_backend", "pipeline"]
 
 [tool.ruff]
 line-length = 100
