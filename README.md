@@ -129,7 +129,7 @@ A production RAG platform would need stronger retrieval evaluation, source gover
 - **Repository-relative index paths** instead of local machine paths
 - **Expanded demo corpus** with multiple RAG engineering topics
 - **Golden-query retrieval benchmark**
-- **Retrieval metrics**: Hit@K, Precision@K, Recall@K, and MRR
+- **Retrieval metrics**: Hit@K, Precision@K, Recall@K, MRR, and nDCG@K
 - **FastAPI backend**
 - **Streamlit frontend**
 - **Unit tests and GitHub Actions CI**
@@ -584,6 +584,7 @@ Evaluation metrics include:
 | `precision@k` | Fraction of top-k retrieved documents that are relevant |
 | `recall@k` | Fraction of relevant documents retrieved in the top-k results |
 | `MRR` | Reciprocal rank of the first relevant retrieved document |
+| `nDCG@k` | Rank-weighted gain, rewarding relevant documents nearer the top |
 </div>
 
 Example custom run:
@@ -594,6 +595,16 @@ python -m evaluation.evaluate_retrieval \
   --base-k 8 \
   --top-n 6 \
   --expand-hops 1
+```
+
+### Regression gate
+
+`evaluation/baseline.json` holds minimum acceptable metrics. Passing
+`--fail-under evaluation/baseline.json` makes the evaluation exit non-zero if any
+metric drops below its threshold, which CI uses to block retrieval regressions:
+
+```bash
+graph-rag-eval --fail-under evaluation/baseline.json
 ```
 
 > The included benchmark is a demo retrieval benchmark, not a production-grade RAG evaluation suite.

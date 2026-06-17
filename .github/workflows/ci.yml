@@ -91,7 +91,8 @@ jobs:
             --k 3 \
             --base-k 8 \
             --top-n 6 \
-            --expand-hops 1
+            --expand-hops 1 \
+            --fail-under evaluation/baseline.json
 
       - name: Run unit tests
         env:

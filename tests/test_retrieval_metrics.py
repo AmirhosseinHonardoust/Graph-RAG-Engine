@@ -1,6 +1,11 @@
 import unittest
 
-from evaluation.metrics import evaluate_query, summarize_evaluations, unique_preserve_order
+from evaluation.metrics import (
+    evaluate_query,
+    ndcg_at_k,
+    summarize_evaluations,
+    unique_preserve_order,
+)
 
 
 class RetrievalMetricTests(unittest.TestCase):
@@ -45,6 +50,31 @@ class RetrievalMetricTests(unittest.TestCase):
         self.assertEqual(summary["num_queries"], 2.0)
         self.assertEqual(summary["mean_hit_at_k"], 0.5)
         self.assertEqual(summary["mean_recall_at_k"], 0.5)
+
+    def test_ndcg_at_k_perfect_ranking_is_one(self):
+        # All relevant docs at the top in ideal order.
+        self.assertAlmostEqual(ndcg_at_k(["a", "b", "c"], {"a", "b"}, 3), 1.0)
+
+    def test_ndcg_at_k_rewards_higher_ranks(self):
+        top_rank = ndcg_at_k(["a", "x", "y"], {"a"}, 3)
+        low_rank = ndcg_at_k(["x", "y", "a"], {"a"}, 3)
+        self.assertGreater(top_rank, low_rank)
+        self.assertAlmostEqual(top_rank, 1.0)
+
+    def test_ndcg_at_k_no_relevant_is_zero(self):
+        self.assertEqual(ndcg_at_k(["a", "b"], set(), 3), 0.0)
+
+    def test_summary_includes_ndcg(self):
+        result = evaluate_query(
+            query_id="q1",
+            question="test",
+            relevant_doc_ids=["doc_a"],
+            retrieved_doc_ids=["doc_a", "doc_b"],
+            k=3,
+        )
+        summary = summarize_evaluations([result])
+        self.assertIn("mean_ndcg_at_k", summary)
+        self.assertAlmostEqual(summary["mean_ndcg_at_k"], 1.0)
 
 
 if __name__ == "__main__":

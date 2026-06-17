@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
+from math import log2
 from statistics import mean
 
 
@@ -18,6 +19,7 @@ class QueryEvaluation:
     precision_at_k: float
     recall_at_k: float
     reciprocal_rank: float
+    ndcg_at_k: float
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -30,6 +32,7 @@ class QueryEvaluation:
             "precision_at_k": self.precision_at_k,
             "recall_at_k": self.recall_at_k,
             "reciprocal_rank": self.reciprocal_rank,
+            "ndcg_at_k": self.ndcg_at_k,
         }
 
 
@@ -82,6 +85,19 @@ def reciprocal_rank(retrieved: Sequence[str], relevant: set[str]) -> float:
     return 0.0
 
 
+def ndcg_at_k(retrieved: Sequence[str], relevant: set[str], k: int) -> float:
+    """Normalized discounted cumulative gain at k with binary relevance."""
+    if not relevant:
+        return 0.0
+    top = _top_k(retrieved, k)
+    dcg = sum(
+        1.0 / log2(rank + 1) for rank, doc_id in enumerate(top, start=1) if doc_id in relevant
+    )
+    ideal_hits = min(len(relevant), k)
+    idcg = sum(1.0 / log2(rank + 1) for rank in range(1, ideal_hits + 1))
+    return dcg / idcg if idcg > 0 else 0.0
+
+
 def evaluate_query(
     *,
     query_id: str,
@@ -104,6 +120,7 @@ def evaluate_query(
         precision_at_k=precision_at_k(ranked_unique, relevant, k),
         recall_at_k=recall_at_k(ranked_unique, relevant, k),
         reciprocal_rank=reciprocal_rank(ranked_unique, relevant),
+        ndcg_at_k=ndcg_at_k(ranked_unique, relevant, k),
     )
 
 
@@ -117,6 +134,7 @@ def summarize_evaluations(evaluations: Sequence[QueryEvaluation]) -> dict[str, f
             "mean_precision_at_k": 0.0,
             "mean_recall_at_k": 0.0,
             "mean_reciprocal_rank": 0.0,
+            "mean_ndcg_at_k": 0.0,
         }
 
     return {
@@ -125,4 +143,5 @@ def summarize_evaluations(evaluations: Sequence[QueryEvaluation]) -> dict[str, f
         "mean_precision_at_k": mean(e.precision_at_k for e in evaluations),
         "mean_recall_at_k": mean(e.recall_at_k for e in evaluations),
         "mean_reciprocal_rank": mean(e.reciprocal_rank for e in evaluations),
+        "mean_ndcg_at_k": mean(e.ndcg_at_k for e in evaluations),
     }
