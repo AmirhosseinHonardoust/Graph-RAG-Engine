@@ -39,7 +39,7 @@ class GraphStoreTests(unittest.TestCase):
     def test_save_and_load_roundtrip(self):
         graph = self._build_graph()
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "graph.pkl"
+            path = Path(tmp) / "graph.json"
             graph.save(path)
             loaded = GraphStore.load(path)
 

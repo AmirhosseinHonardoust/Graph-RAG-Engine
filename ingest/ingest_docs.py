@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import pickle
+import json
 from pathlib import Path
 from typing import Any
 
@@ -79,10 +79,10 @@ def build_index(docs: list[dict[str, Any]], out_dir: Path = OUT_DIR) -> None:
     index = faiss.IndexFlatIP(vectors.shape[1])
     index.add(vectors)
 
-    with (out_dir / "docs.pkl").open("wb") as f:
-        pickle.dump(docs, f)
-    with (out_dir / "chunks.pkl").open("wb") as f:
-        pickle.dump(chunks, f)
+    with (out_dir / "docs.json").open("w", encoding="utf-8") as f:
+        json.dump(docs, f)
+    with (out_dir / "chunks.json").open("w", encoding="utf-8") as f:
+        json.dump(chunks, f)
     np.save(out_dir / "vectors.npy", vectors)
     faiss.write_index(index, str(out_dir / "faiss.index"))
 
@@ -95,7 +95,7 @@ def build_index(docs: list[dict[str, Any]], out_dir: Path = OUT_DIR) -> None:
             graph_store.add_concept(concept)
             graph_store.link_mentions(chunk["id"], concept)
     graph_store.compute_doc_pagerank()
-    graph_store.save(out_dir / "graph.pkl")
+    graph_store.save(out_dir / "graph.json")
 
 
 def main() -> None:

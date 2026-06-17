@@ -103,9 +103,9 @@ jobs:
         run: |
           test -f data/index/faiss.index
           test -f data/index/vectors.npy
-          test -f data/index/docs.pkl
-          test -f data/index/chunks.pkl
-          test -f data/index/graph.pkl
+          test -f data/index/docs.json
+          test -f data/index/chunks.json
+          test -f data/index/graph.json
           test -f evaluation/results/retrieval_eval.json
 
       - name: Upload retrieval artifacts
