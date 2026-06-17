@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 import json
 import os
-from typing import Any, Dict, List, Optional
+from dataclasses import dataclass
+from typing import Any
 from urllib import error, request
-
 
 DEFAULT_SYSTEM_PROMPT = (
     "You are a careful retrieval-augmented assistant. Answer only from the "
@@ -22,7 +21,7 @@ class LLMConfig:
     activated only when the user explicitly requests it and an API key exists.
     """
 
-    api_key: Optional[str]
+    api_key: str | None
     model: str = "gpt-4o-mini"
     base_url: str = "https://api.openai.com/v1"
     timeout_seconds: int = 30
@@ -30,7 +29,7 @@ class LLMConfig:
     max_tokens: int = 500
 
     @classmethod
-    def from_env(cls) -> "LLMConfig":
+    def from_env(cls) -> LLMConfig:
         return cls(
             api_key=os.getenv("GRAPH_RAG_LLM_API_KEY") or os.getenv("OPENAI_API_KEY"),
             model=os.getenv("GRAPH_RAG_LLM_MODEL", "gpt-4o-mini"),
@@ -41,7 +40,7 @@ class LLMConfig:
         )
 
 
-def build_source_context(passages: List[Dict[str, Any]], max_chars_per_source: int = 1200) -> str:
+def build_source_context(passages: list[dict[str, Any]], max_chars_per_source: int = 1200) -> str:
     """Format retrieved passages as numbered source context for an LLM."""
 
     if not passages:
@@ -58,7 +57,7 @@ def build_source_context(passages: List[Dict[str, Any]], max_chars_per_source: i
     return "\n\n".join(blocks)
 
 
-def build_rag_prompt(question: str, passages: List[Dict[str, Any]]) -> str:
+def build_rag_prompt(question: str, passages: list[dict[str, Any]]) -> str:
     """Build a grounded RAG prompt from a question and retrieved passages."""
 
     context = build_source_context(passages)
@@ -81,8 +80,8 @@ def _chat_completions_url(base_url: str) -> str:
 
 def generate_llm_answer(
     question: str,
-    passages: List[Dict[str, Any]],
-    config: Optional[LLMConfig] = None,
+    passages: list[dict[str, Any]],
+    config: LLMConfig | None = None,
 ) -> str:
     """Generate a grounded answer with an OpenAI-compatible API.
 
