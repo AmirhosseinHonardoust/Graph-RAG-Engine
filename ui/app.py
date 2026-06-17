@@ -1,4 +1,5 @@
 import os
+
 import requests
 import streamlit as st
 
@@ -12,7 +13,9 @@ st.set_page_config(page_title="Graph RAG MVP", layout="wide")
 
 # Sidebar configuration
 st.sidebar.title("Settings")
-api_url = st.sidebar.text_input("Backend API URL", value=DEFAULT_API, help="Example: http://localhost:8000")
+api_url = st.sidebar.text_input(
+    "Backend API URL", value=DEFAULT_API, help="Example: http://localhost:8000"
+)
 if st.sidebar.button("Check API health"):
     try:
         r = requests.get(f"{api_url}/health", timeout=10)
@@ -22,6 +25,7 @@ if st.sidebar.button("Check API health"):
 
 st.title("Graph-Powered Recommendation & Reasoning (MVP)")
 
+
 # -------------------------------------------------------------------
 # Helpers
 # -------------------------------------------------------------------
@@ -30,10 +34,12 @@ def post_json(url: str, payload: dict, timeout: int = 60):
     r.raise_for_status()
     return r.json()
 
+
 def get_json(url: str, timeout: int = 60):
     r = requests.get(url, timeout=timeout)
     r.raise_for_status()
     return r.json()
+
 
 # -------------------------------------------------------------------
 # Tabs
@@ -50,7 +56,8 @@ with tab1:
         index=0,
         help=(
             "Extractive mode returns retrieved source passages directly. "
-            "LLM mode asks the backend to synthesize a grounded answer when optional LLM credentials are configured."
+            "LLM mode asks the backend to synthesize a grounded answer when "
+            "optional LLM credentials are configured."
         ),
     )
     ask_col1, ask_col2 = st.columns([1, 3])
@@ -95,7 +102,8 @@ with tab1:
         )
         st.markdown(
             "**Mode guide:** `extractive` is source-first and always available. "
-            "`llm` requires the backend LLM configuration and will safely fall back when unavailable."
+            "`llm` requires the backend LLM configuration and will safely "
+            "fall back when unavailable."
         )
 
 # --------------------------- RECOMMEND ------------------------------
