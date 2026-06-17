@@ -1,26 +1,48 @@
-# Tooling configuration for Graph-RAG-Engine.
-#
-# Tooling-only for now: this configures linting, formatting, and type checking
-# without changing how the project is imported or installed. Packaging is a
-# separate, later change.
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "graph-rag-engine"
+version = "0.1.0"
+description = "Explainable graph + vector retrieval over Markdown docs, with FAISS, a NetworkX knowledge graph, retrieval traces, and optional LLM answers."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [{ name = "Amir Honardoust" }]
+dependencies = [
+    "fastapi==0.111.0",
+    "uvicorn==0.30.1",
+    "streamlit==1.37.1",
+    "sentence-transformers==3.0.1",
+    "faiss-cpu==1.8.0",
+    "networkx==3.3",
+    "numpy==1.26.4",
+    "pandas==2.2.2",
+    "scikit-learn==1.4.2",
+    "pydantic==2.7.1",
+    "requests==2.32.3",
+    "orjson==3.10.7",
+]
+
+[project.optional-dependencies]
+dev = ["ruff", "black", "mypy", "pre-commit"]
+
+[project.scripts]
+graph-rag-ingest = "ingest.ingest_docs:main"
+graph-rag-eval = "evaluation.evaluate_retrieval:main"
+graph-rag-serve = "run_backend:main"
+
+[tool.setuptools]
+packages = ["backend", "graph", "ingest", "evaluation", "ui"]
+py-modules = ["run_backend"]
 
 [tool.ruff]
 line-length = 100
 target-version = "py310"
 
 [tool.ruff.lint]
-# E/F: pycodestyle + pyflakes
-# I:   import sorting
-# B:   flake8-bugbear (likely bugs)
-# SIM: flake8-simplify
-# UP:  pyupgrade
 select = ["E", "F", "I", "B", "SIM", "UP"]
-
-[tool.ruff.lint.per-file-ignores]
-# Tests prepend the repo root to sys.path before importing project modules,
-# which trips E402 (import not at top). This is removed once the project is
-# packaged and the shim is no longer needed.
-"tests/*" = ["E402"]
 
 [tool.black]
 line-length = 100
@@ -28,12 +50,5 @@ target-version = ["py310", "py311", "py312"]
 
 [tool.mypy]
 python_version = "3.10"
-# The project uses a flat multi-package layout (backend/, graph/, ingest/, ...)
-# without an installed package, so mypy needs the repo root as the base.
-mypy_path = "."
-explicit_package_bases = true
-namespace_packages = true
-# faiss, sentence-transformers, streamlit, and uvicorn do not ship type stubs,
-# so their imports are treated as untyped rather than failing the type check.
 ignore_missing_imports = true
 warn_redundant_casts = true
