@@ -45,6 +45,36 @@ class GraphStoreTests(unittest.TestCase):
 
         self.assertEqual(loaded.get_doc_info("doc_a")["title"], "Doc A")
 
+    def test_pagerank_links_docs_sharing_a_concept(self):
+        graph = self._build_graph()  # doc_a and doc_b both mention "graph"
+
+        related_edges = {
+            (u[1], v[1])
+            for u, v, data in graph.G.edges(data=True)
+            if data.get("type") == "RELATED_DOC"
+        }
+        self.assertIn(("doc_a", "doc_b"), related_edges)
+        self.assertIn(("doc_b", "doc_a"), related_edges)
+        self.assertGreater(graph.get_doc_info("doc_a")["pagerank"], 0.0)
+
+    def test_pagerank_leaves_unrelated_docs_unconnected(self):
+        graph = GraphStore()
+        graph.add_doc("doc_a", "Doc A", "data/docs/a.md")
+        graph.add_doc("doc_c", "Doc C", "data/docs/c.md")
+        graph.add_chunk("chunk_a", "graph text", "doc_a")
+        graph.add_chunk("chunk_c", "streamlit text", "doc_c")
+        for chunk_id, concept in [("chunk_a", "graph"), ("chunk_c", "streamlit")]:
+            graph.add_concept(concept)
+            graph.link_mentions(chunk_id, concept)
+        graph.compute_doc_pagerank()
+
+        related_edges = {
+            (u[1], v[1])
+            for u, v, data in graph.G.edges(data=True)
+            if data.get("type") == "RELATED_DOC"
+        }
+        self.assertEqual(related_edges, set())
+
 
 if __name__ == "__main__":
     unittest.main()
