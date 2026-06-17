@@ -1,0 +1,26 @@
+# Byte-compiled / cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+.venv/
+venv/
+env/.venv/
+
+# Generated retrieval artifacts (rebuilt by `python -m ingest.ingest_docs`)
+data/index/
+
+# Generated evaluation reports (rebuilt by `python -m evaluation.evaluate_retrieval`)
+evaluation/results/
+
+# Tooling caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
