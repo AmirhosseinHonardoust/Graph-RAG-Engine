@@ -1,5 +1,5 @@
 import compileall
-import pickle
+import json
 import unittest
 from pathlib import Path
 
@@ -11,7 +11,8 @@ ROOT = Path(__file__).resolve().parents[1]
 
 INDEX_DIR = ROOT / "data" / "index"
 INDEX_AVAILABLE = all(
-    (INDEX_DIR / name).exists() for name in ("chunks.pkl", "docs.pkl", "vectors.npy", "graph.pkl")
+    (INDEX_DIR / name).exists()
+    for name in ("chunks.json", "docs.json", "vectors.npy", "graph.json")
 )
 INDEX_SKIP_REASON = "Index artifacts not built; run `python -m ingest.ingest_docs`."
 
@@ -27,10 +28,10 @@ class ProjectIntegrityTests(unittest.TestCase):
     @unittest.skipUnless(INDEX_AVAILABLE, INDEX_SKIP_REASON)
     def test_saved_index_artifacts_are_consistent(self):
         index_dir = ROOT / "data" / "index"
-        with (index_dir / "chunks.pkl").open("rb") as f:
-            chunks = pickle.load(f)
-        with (index_dir / "docs.pkl").open("rb") as f:
-            docs = pickle.load(f)
+        with (index_dir / "chunks.json").open(encoding="utf-8") as f:
+            chunks = json.load(f)
+        with (index_dir / "docs.json").open(encoding="utf-8") as f:
+            docs = json.load(f)
         vectors = np.load(index_dir / "vectors.npy")
 
         self.assertGreater(len(docs), 0)
@@ -41,10 +42,10 @@ class ProjectIntegrityTests(unittest.TestCase):
     @unittest.skipUnless(INDEX_AVAILABLE, INDEX_SKIP_REASON)
     def test_index_urls_are_repo_relative(self):
         index_dir = ROOT / "data" / "index"
-        with (index_dir / "docs.pkl").open("rb") as f:
-            docs = pickle.load(f)
-        with (index_dir / "chunks.pkl").open("rb") as f:
-            chunks = pickle.load(f)
+        with (index_dir / "docs.json").open(encoding="utf-8") as f:
+            docs = json.load(f)
+        with (index_dir / "chunks.json").open(encoding="utf-8") as f:
+            chunks = json.load(f)
 
         urls = [doc.get("url", "") for doc in docs]
         urls.extend(chunk.get("url", "") for chunk in chunks)
@@ -59,7 +60,7 @@ class ProjectIntegrityTests(unittest.TestCase):
             self.assertNotIn("file://", url)
             self.assertNotIn("\\", url)
 
-        graph = GraphStore.load(index_dir / "graph.pkl")
+        graph = GraphStore.load(index_dir / "graph.json")
         for doc in docs:
             info = graph.get_doc_info(doc["id"])
             self.assertEqual(info["url"], doc["url"])
