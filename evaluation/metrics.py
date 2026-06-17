@@ -1,8 +1,8 @@
 from __future__ import annotations
 
+from collections.abc import Iterable, Sequence
 from dataclasses import dataclass
 from statistics import mean
-from typing import Dict, Iterable, List, Sequence, Set
 
 
 @dataclass(frozen=True)
@@ -11,15 +11,15 @@ class QueryEvaluation:
 
     query_id: str
     question: str
-    relevant_doc_ids: List[str]
-    retrieved_doc_ids: List[str]
+    relevant_doc_ids: list[str]
+    retrieved_doc_ids: list[str]
     k: int
     hit_at_k: float
     precision_at_k: float
     recall_at_k: float
     reciprocal_rank: float
 
-    def to_dict(self) -> Dict[str, object]:
+    def to_dict(self) -> dict[str, object]:
         return {
             "query_id": self.query_id,
             "question": self.question,
@@ -33,11 +33,11 @@ class QueryEvaluation:
         }
 
 
-def unique_preserve_order(items: Iterable[str]) -> List[str]:
+def unique_preserve_order(items: Iterable[str]) -> list[str]:
     """Return unique items without changing their first-seen order."""
 
-    seen: Set[str] = set()
-    result: List[str] = []
+    seen: set[str] = set()
+    result: list[str] = []
     for item in items:
         if item not in seen:
             seen.add(item)
@@ -45,19 +45,19 @@ def unique_preserve_order(items: Iterable[str]) -> List[str]:
     return result
 
 
-def _top_k(retrieved: Sequence[str], k: int) -> List[str]:
+def _top_k(retrieved: Sequence[str], k: int) -> list[str]:
     if k <= 0:
         raise ValueError("k must be greater than zero")
     return list(retrieved[:k])
 
 
-def hit_at_k(retrieved: Sequence[str], relevant: Set[str], k: int) -> float:
+def hit_at_k(retrieved: Sequence[str], relevant: set[str], k: int) -> float:
     if not relevant:
         return 0.0
     return float(any(doc_id in relevant for doc_id in _top_k(retrieved, k)))
 
 
-def precision_at_k(retrieved: Sequence[str], relevant: Set[str], k: int) -> float:
+def precision_at_k(retrieved: Sequence[str], relevant: set[str], k: int) -> float:
     top = _top_k(retrieved, k)
     if not top:
         return 0.0
@@ -65,7 +65,7 @@ def precision_at_k(retrieved: Sequence[str], relevant: Set[str], k: int) -> floa
     return hits / len(top)
 
 
-def recall_at_k(retrieved: Sequence[str], relevant: Set[str], k: int) -> float:
+def recall_at_k(retrieved: Sequence[str], relevant: set[str], k: int) -> float:
     if not relevant:
         return 0.0
     top = _top_k(retrieved, k)
@@ -73,7 +73,7 @@ def recall_at_k(retrieved: Sequence[str], relevant: Set[str], k: int) -> float:
     return hits / len(relevant)
 
 
-def reciprocal_rank(retrieved: Sequence[str], relevant: Set[str]) -> float:
+def reciprocal_rank(retrieved: Sequence[str], relevant: set[str]) -> float:
     if not relevant:
         return 0.0
     for rank, doc_id in enumerate(retrieved, start=1):
@@ -107,7 +107,7 @@ def evaluate_query(
     )
 
 
-def summarize_evaluations(evaluations: Sequence[QueryEvaluation]) -> Dict[str, float]:
+def summarize_evaluations(evaluations: Sequence[QueryEvaluation]) -> dict[str, float]:
     """Aggregate query-level evaluations into mean metrics."""
 
     if not evaluations:
