@@ -79,20 +79,9 @@ jobs:
         run: |
           python -m compileall backend graph ingest ui evaluation tests run_backend.py
 
-      - name: Rebuild retrieval index
+      - name: Build index and evaluate (pipeline)
         run: |
-          python -m ingest.ingest_docs
-
-      - name: Run retrieval evaluation
-        run: |
-          python -m evaluation.evaluate_retrieval \
-            --queries evaluation/golden_queries.json \
-            --output evaluation/results/retrieval_eval.json \
-            --k 3 \
-            --base-k 8 \
-            --top-n 6 \
-            --expand-hops 1 \
-            --fail-under evaluation/baseline.json
+          graph-rag-pipeline
 
       - name: Run unit tests
         env:
