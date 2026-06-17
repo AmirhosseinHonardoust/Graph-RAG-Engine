@@ -7,6 +7,7 @@ sys.path.insert(0, str(ROOT))
 
 try:
     from fastapi.testclient import TestClient
+
     from backend.api import app
 except ModuleNotFoundError as exc:  # Allows lightweight local checks without optional deps.
     TestClient = None
