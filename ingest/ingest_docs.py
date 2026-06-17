@@ -98,9 +98,13 @@ def build_index(docs: list[dict[str, Any]], out_dir: Path = OUT_DIR) -> None:
     graph_store.save(out_dir / "graph.pkl")
 
 
-if __name__ == "__main__":
+def main() -> None:
     loaded_docs = load_docs()
     if not loaded_docs:
         raise SystemExit(f"No docs found in {DOCS_DIR}")
     build_index(loaded_docs)
     print(f"Ingested {len(loaded_docs)} docs. Index written to {OUT_DIR}")
+
+
+if __name__ == "__main__":
+    main()
