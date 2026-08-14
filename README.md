@@ -1,5 +1,5 @@
 <div align="center">
-        
+         
 # Graph-RAG-Engine
 <img width="1666" height="935" alt="Graph-RAG-Engine" src="https://github.com/user-attachments/assets/080172f2-0a85-4c97-8f3f-2e83b9272720" />
 
